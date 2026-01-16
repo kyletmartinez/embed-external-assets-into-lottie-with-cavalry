@@ -62,7 +62,6 @@ function centerAnchorPoints(lottie) {
         }
     }
 
-    let anchorsCentered = 0;
     for (let layer of lottie.layers) {
         if (layer.ty === 2 && layer.refId) {
             const dims = assetDimensions[layer.refId];
@@ -72,7 +71,6 @@ function centerAnchorPoints(lottie) {
             }
         }
     }
-    return anchorsCentered;
 }
 
 function getMimeType(filePath) {
