@@ -67,7 +67,6 @@ function centerAnchorPoints(lottie) {
             const dims = assetDimensions[layer.refId];
             if (dims && layer.ks && layer.ks.a) {
                 layer.ks.a.k = [dims.w / -2, dims.h / -2, 0];
-                anchorsCentered++;
             }
         }
     }
