@@ -10,9 +10,11 @@
  * script.
  */
 
-function writeNewFile(lottiePath, lottie) {
-    const embeddedJson = JSON.stringify(lottie);
-    return api.writeToFile(lottiePath, embeddedJson, true);
+function updateUI(result) {
+    const color = result.success ? "Accent1" : "Accent4";
+    const prefix = result.success ? "Success" : "Error";
+    label.setTextColor(ui.getThemeColor(color));
+    label.setText(`${prefix}: Embedded ${result.matchCount} asset(s)`);
 }
 
 function writeNewFile(filePath, lottie) {
@@ -116,9 +118,7 @@ function embedAssets() {
     const matchCount = processAssets(lottie.assets, sceneAssets);
 
     if (matchCount !== lottie.assets.length) {
-        label.setTextColor(ui.getThemeColor("Accent4"));
-        label.setText("Error: " + matchCount + " of " + lottie.assets.length + " asset(s) matched");
-        return;
+        return { success: false, matchCount };
     }
 
     if (checkbox.getValue()) {
@@ -128,8 +128,7 @@ function embedAssets() {
     backupOriginalFile(lottieFilePath);
     writeNewFile(lottieFilePath, lottie);
 
-    label.setTextColor(ui.getThemeColor("Accent1"));
-    label.setText("Success: Embedded " + matchCount + " asset(s)");
+    return { success: true, matchCount };
 }
 
 ui.setTitle("Embed External Assets");
@@ -147,7 +146,10 @@ checkboxRow.add(checkbox);
 checkboxRow.add(checkboxLabel);
 
 button.onClick = () => {
-    embedAssets();
+    const result = embedAssets();
+    if (!result) return;
+
+    updateUI(result);
 };
 
 ui.add(button);
