@@ -15,25 +15,26 @@ function writeNewFile(lottiePath, lottie) {
     return api.writeToFile(lottiePath, embeddedJson, true);
 }
 
-function backupOriginalFile(lottiePath) {
-    const backupPath = lottiePath + ".bak";
-    const originalText = api.readFromFile(lottiePath);
-    return api.writeToFile(backupPath, originalText, true);
+function writeNewFile(filePath, lottie) {
+    const json = JSON.stringify(lottie);
+    return api.writeToFile(filePath, json, true);
+}
+
+function backupOriginalFile(filePath) {
+    const json = api.readFromFile(filePath);
+    return api.writeToFile(`${filePath}.bak`, json, true);
 }
 
 function centerAnchorPoints(lottie) {
-    const assetDimensions = {};
-    for (let asset of lottie.assets) {
-        if (asset.w && asset.h) {
-            assetDimensions[asset.id] = { w: asset.w, h: asset.h };
-        }
-    }
+    const assetDimensions = Object.fromEntries(
+        lottie.assets.map(({ id, w, h }) => [id, { w, h }])
+    );
 
     for (let layer of lottie.layers) {
         if (layer.ty === 2 && layer.refId) {
-            const dims = assetDimensions[layer.refId];
-            if (dims && layer.ks && layer.ks.a) {
-                layer.ks.a.k = [dims.w / -2, dims.h / -2, 0];
+            const layerDimensions = assetDimensions[layer.refId];
+            if (layerDimensions && layer.ks && layer.ks.a) {
+                layer.ks.a.k = [layerDimensions.w / -2, layerDimensions.h / -2, 0];
             }
         }
     }
@@ -60,30 +61,30 @@ function getMimeType(filePath) {
     }
 }
 
-function getBase64WithDataUri(filePath) {
+function getDataURI(filePath) {
     const base64 = api.encodeBinary(filePath);
     const mimeType = getMimeType(filePath);
     return `data:${mimeType};base64,${base64}`;
 }
 
-function findMatchingSceneAsset(lottieName, sceneAssets) {
-    const lottieBaseName = api.getFileNameFromPath(lottieName, false);
-    for (let sceneName in sceneAssets) {
-        if (lottieBaseName.includes(sceneName)) {
-            return sceneAssets[sceneName];
+function findMatchingSceneAsset(lottieFilePath, sceneAssets) {
+    const lottieFileName = api.getFileNameFromPath(lottieFilePath, false);
+    for (let sceneFileName in sceneAssets) {
+        if (lottieFileName.includes(sceneFileName)) {
+            return sceneAssets[sceneFileName];
         }
     }
     return null;
 }
 
-function processAssets(assets, sceneAssets) {
+function processAssets(lottieAssets, sceneAssets) {
     let matchCount = 0;
-    for (let asset of assets) {
-        const matchedPath = findMatchingSceneAsset(asset.p, sceneAssets);
-        if (matchedPath) {
-            asset.u = "";
-            asset.p = getBase64WithDataUri(matchedPath);
-            asset.e = 1;
+    for (let lottieAsset of lottieAssets) {
+        const sceneFilePath = findMatchingSceneAsset(lottieAsset.p, sceneAssets);
+        if (sceneFilePath) {
+            lottieAsset.u = "";
+            lottieAsset.p = getDataURI(sceneFilePath);
+            lottieAsset.e = 1;
             matchCount++;
         }
     }
@@ -91,17 +92,17 @@ function processAssets(assets, sceneAssets) {
 }
 
 function getSceneAssets() {
-    const assets = {};
-    const assetIds = api.getAssetWindowLayers(false);
-    for (let assetId of assetIds) {
-        const type = api.getAssetType(assetId);
-        if (type !== "unknown") {
-            const path = api.getAssetFilePath(assetId);
-            const name = api.getFileNameFromPath(path, false);
-            assets[name] = path;
+    const sceneAssets = {};
+    const sceneAssetIds = api.getAssetWindowLayers(false);
+    for (let sceneAssetId of sceneAssetIds) {
+        const sceneAssetType = api.getAssetType(sceneAssetId);
+        if (sceneAssetType !== "unknown") {
+            const sceneFilePath = api.getAssetFilePath(sceneAssetId);
+            const sceneFileName = api.getFileNameFromPath(sceneFilePath, false);
+            sceneAssets[sceneFileName] = sceneFilePath;
         }
     }
-    return assets;
+    return sceneAssets;
 }
 
 function embedAssets() {
@@ -124,8 +125,8 @@ function embedAssets() {
         centerAnchorPoints(lottie);
     }
 
-    backupOriginalFile(lottiePath);
-    writeNewFile(lottiePath, lottie);
+    backupOriginalFile(lottieFilePath);
+    writeNewFile(lottieFilePath, lottie);
 
     label.setTextColor(ui.getThemeColor("Accent1"));
     label.setText("Success: Embedded " + matchCount + " asset(s)");
