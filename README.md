@@ -20,7 +20,7 @@ Embed external assets into Lottie from the original Cavalry file.
 4. If successful the old JSON will be saved with a `.bak` extension and the new JSON will have all external assets embedded into the JSON file
 
 > [!WARNING]
-> The script uses a _fuzzy-match_ to ensure the current `.cv` contains all assets used in the Lottie. If even one is missing, no embedding will happen. For best results, enusure the original `.cv` used to export the Lottie is open.
+> The script uses a _fuzzy-match_ to ensure the current `.cv` contains all assets used in the Lottie. If even one is missing, no embedding will happen. For best results, ensure the original `.cv` used to export the Lottie is open.
 
 ## Discoveries
 
