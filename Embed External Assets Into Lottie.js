@@ -104,22 +104,13 @@ function getSceneAssets() {
     return assets;
 }
 
-function getLottie() {
-    const path = api.presentOpenFile("", "Select JSON", "Data File (*.json)");
-    if (!path) {
+function embedAssets() {
+    const lottieFilePath = api.presentOpenFile("", "Select JSON", "Data File (*.json)");
+    if (!lottieFilePath) {
         return null;
     }
-    const text = api.readFromFile(path);
-    const json = JSON.parse(text);
-    return { path: path, data: json };
-}
 
-function embedAssets() {
-    const lottieFile = getLottie();
-    if (!lottieFile) {
-        return;
-    }
-    const { path: lottiePath, data: lottie } = lottieFile;
+    const lottie = JSON.parse(api.readFromFile(lottieFilePath));
     const sceneAssets = getSceneAssets();
     const matchCount = processAssets(lottie.assets, sceneAssets);
 
