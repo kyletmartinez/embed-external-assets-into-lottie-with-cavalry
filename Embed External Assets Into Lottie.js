@@ -41,16 +41,23 @@ function centerAnchorPoints(lottie) {
 
 function getMimeType(filePath) {
     const extension = api.getExtensionFromPath(filePath).toLowerCase();
-    const mimeTypes = {
-        "bmp": "image/bmp",
-        "exr": "image/x-exr",
-        "ico": "image/x-icon",
-        "jpg": "image/jpeg",
-        "jpeg": "image/jpeg",
-        "png": "image/png",
-        "webp": "image/webp"
-    };
-    return mimeTypes[extension] || "application/octet-stream";
+    switch (extension) {
+        case "bmp":
+            return "image/bmp";
+        case "exr":
+            return "image/x-exr";
+        case "ico":
+            return "image/x-icon";
+        case "jpg":
+        case "jpeg":
+            return "image/jpeg";
+        case "png":
+            return "image/png";
+        case "webp":
+            return "image/webp";
+        default:
+            return "application/octet-stream";
+    }
 }
 
 function getBase64WithDataUri(filePath) {
