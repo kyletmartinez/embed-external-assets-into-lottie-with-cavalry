@@ -11,10 +11,11 @@
  */
 
 function updateUI(result) {
-    const color = result.success ? "Accent1" : "Accent4";
-    const prefix = result.success ? "Success" : "Error";
+    const { embedded, total } = result;
+    const color = (embedded === total) ? "Accent1" : "Accent4";
+    const prefix = (embedded === total) ? "Success" : "Error";
     label.setTextColor(ui.getThemeColor(color));
-    label.setText(`${prefix}: Embedded ${result.matchCount} asset(s)`);
+    label.setText(`${prefix}: ${embedded} of ${total} assets embedded`);
 }
 
 function writeNewFile(filePath, lottie) {
@@ -69,44 +70,6 @@ function getDataURI(filePath) {
     return `data:${mimeType};base64,${base64}`;
 }
 
-function findMatchingSceneAsset(lottieFilePath, sceneAssets) {
-    const lottieFileName = api.getFileNameFromPath(lottieFilePath, false);
-    for (let sceneFileName in sceneAssets) {
-        if (lottieFileName.includes(sceneFileName)) {
-            return sceneAssets[sceneFileName];
-        }
-    }
-    return null;
-}
-
-function processAssets(lottieAssets, sceneAssets) {
-    let matchCount = 0;
-    for (let lottieAsset of lottieAssets) {
-        const sceneFilePath = findMatchingSceneAsset(lottieAsset.p, sceneAssets);
-        if (sceneFilePath) {
-            lottieAsset.u = "";
-            lottieAsset.p = getDataURI(sceneFilePath);
-            lottieAsset.e = 1;
-            matchCount++;
-        }
-    }
-    return matchCount;
-}
-
-function getSceneAssets() {
-    const sceneAssets = {};
-    const sceneAssetIds = api.getAssetWindowLayers(false);
-    for (let sceneAssetId of sceneAssetIds) {
-        const sceneAssetType = api.getAssetType(sceneAssetId);
-        if (sceneAssetType !== "unknown") {
-            const sceneFilePath = api.getAssetFilePath(sceneAssetId);
-            const sceneFileName = api.getFileNameFromPath(sceneFilePath, false);
-            sceneAssets[sceneFileName] = sceneFilePath;
-        }
-    }
-    return sceneAssets;
-}
-
 function embedAssets() {
     const lottieFilePath = api.presentOpenFile("", "Select JSON", "Data File (*.json)");
     if (!lottieFilePath) {
@@ -114,11 +77,23 @@ function embedAssets() {
     }
 
     const lottie = JSON.parse(api.readFromFile(lottieFilePath));
-    const sceneAssets = getSceneAssets();
-    const matchCount = processAssets(lottie.assets, sceneAssets);
+    const rootPath = api.getFolderFromPath(lottieFilePath);
 
-    if (matchCount !== lottie.assets.length) {
-        return { success: false, matchCount };
+    let embedded = 0;
+    const total = lottie.assets.length;
+
+    for (let asset of lottie.assets) {
+        const assetPath = `${rootPath}/${asset.u}${asset.p}`;
+        if (api.filePathExists(assetPath)) {
+            asset.p = getDataURI(assetPath);
+            asset.u = "";
+            asset.e = 1;
+            embedded++;
+        }
+    }
+
+    if (embedded !== total) {
+        return { embedded, total };
     }
 
     if (checkbox.getValue()) {
@@ -128,7 +103,7 @@ function embedAssets() {
     backupOriginalFile(lottieFilePath);
     writeNewFile(lottieFilePath, lottie);
 
-    return { success: true, matchCount };
+    return { embedded, total };
 }
 
 ui.setTitle("Embed External Assets");
