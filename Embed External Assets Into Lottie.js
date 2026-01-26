@@ -71,7 +71,7 @@ function getDataURI(filePath) {
 }
 
 function embedAssets() {
-    const lottieFilePath = api.presentOpenFile("", "Select JSON", "Data File (*.json)");
+    const lottieFilePath = api.presentOpenFile("", "", "Data File (*.json)");
     if (!lottieFilePath) {
         return null;
     }
